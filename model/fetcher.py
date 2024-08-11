@@ -2,7 +2,7 @@ import gdown
 
 def fetch_model(url, output):
     """
-    fetches a file from Google Drive and saves it to the specified path.
+    Fetches a file from Google Drive and saves it to the specified path.
     
     Parameters:
     url (str): The sharable link to the file on Google Drive.
@@ -13,5 +13,3 @@ def fetch_model(url, output):
     download_url = f"https://drive.google.com/uc?id={file_id}"
     
     gdown.download(download_url, output, quiet=False)
-    
-    
