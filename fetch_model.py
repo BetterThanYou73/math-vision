@@ -47,7 +47,7 @@ def model_save(m1, models, path=MODEL_PATH):
         
 def fetch_model():
     choices = dict()
-    models = list_model(os.path.join(DIR, "model.csv",))
+    models = list_model(os.path.join(DIR, "models.csv",))
     print("Please decide the model out of the following available:\t")
     
     ct = 1

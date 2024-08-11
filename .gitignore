@@ -1,3 +1,10 @@
+# Ignore all files in a specific directory
+test/
+ignore/
+venv/
+
+
+
 model/model.h5
 model/saved_model.csv
 model/__pycache__/fetcher.cpython-311.pyc

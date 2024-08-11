@@ -1,2 +1,6 @@
 gdown
 pandas
+numpy~=1.2
+pytesseract
+opencv-python
+tensorflow==2.10.1
