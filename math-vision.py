@@ -26,23 +26,33 @@ char_to_num = {
 # Set debug flag to True to enable image visualization
 DEBUG = True
 
+
 def preprocess_image(image_path):
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    _, binary_image = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY_INV)
+    # Using adaptive thresholding for better separation of characters
+    binary_image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
     return binary_image
 
 def segment_characters(binary_image):
-    contours, _ = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # Dilate the image slightly to merge close contours
+    kernel = np.ones((3, 3), np.uint8)
+    dilated_image = cv2.dilate(binary_image, kernel, iterations=1)
+
+    # Find contours
+    contours, _ = cv2.findContours(dilated_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     char_images = []
     bounding_boxes = []
 
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
-        bounding_boxes.append((x, y, w, h))
+        # Filter out small contours that might not be characters
+        if w > 10 and h > 10:  # You can adjust these values based on your dataset
+            bounding_boxes.append((x, y, w, h))
 
-    # Sort the bounding boxes from left to right, top to bottom
-    bounding_boxes = sorted(bounding_boxes, key=lambda b: (b[1], b[0]))
+    # Sort bounding boxes by centroid (center of the box)
+    bounding_boxes = sorted(bounding_boxes, key=lambda b: (b[0] + b[2] / 2, b[1] + b[3] / 2))
 
+    # Segment and process each character
     for (x, y, w, h) in bounding_boxes:
         char_image = binary_image[y:y+h, x:x+w]
         
