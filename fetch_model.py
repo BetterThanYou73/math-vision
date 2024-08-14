@@ -23,7 +23,7 @@ def list_model(path):
     """
 
     df = pd.read_excel(path)
-    models = dict(zip(df['model'], zip(df['url'], df['description'])))
+    models = dict(zip(df['model'], zip(df['url'], df['description'], df['char_to_num'])))
     return models
 
 
@@ -45,8 +45,8 @@ def model_save(m1, models, path=MODEL_PATH):
     
     with open(os.path.join(DIR, 'model', 'current_model.csv'), 'w', newline='') as csvfile:
         labelwriter = csv.writer(csvfile)
-        labelwriter.writerow(['model', 'url', 'description'])
-        labelwriter.writerows(saved.items())
+        labelwriter.writerow(['model', 'url', 'description', 'char_to_num'])
+        labelwriter.writerow([m1, saved[m1][0], saved[m1][1], saved[m1][2]])
         
         
 def fetch_model():
@@ -58,14 +58,14 @@ def fetch_model():
     # Calculate maximum lengths for each column
     max_no_len = max(len(f"Press {ct}") for ct in range(1, len(models) + 1)) + 1
     max_model_len = max(len(model) for model in models) + 2
-    max_desc_len = max(len(desc) for _, desc in models.values()) + 2
+    max_desc_len = max(len(desc) for _, desc, garb in models.values()) + 2
     
     # Print header with dynamic spacing
     print(f"{green_text}{'No.':<{max_no_len}} {'Model Name':<{max_model_len}} {'Description':<{max_desc_len}}{reset_text}")
     print(f"{green_text}{'-' * max_no_len} {'-' * max_model_len} {'-' * max_desc_len}{reset_text}")
     
     ct = 1
-    for model, (url, desc) in models.items():
+    for model, (url, desc, char_to_num) in models.items():
         choices[ct] = model
         print(f"{green_text}Press {ct:<{len('No.')}} {model:<{max_model_len}} {desc:<{max_desc_len}}{reset_text}")
         ct += 1

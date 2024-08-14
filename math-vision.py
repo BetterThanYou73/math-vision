@@ -1,6 +1,8 @@
 import cv2
+import ast
 import pytesseract
 import numpy as np
+import pandas as pd
 from loss import focal_loss
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
@@ -8,23 +10,27 @@ from tensorflow.keras.preprocessing.image import load_img, img_to_array
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 MODEL_PATH = 'model/model.h5'
+SAVED_MODEL_CSV = 'model/current_model.csv'
 SIZE = (140, 140)  # Assuming SIZE is (140, 140) or adjust accordingly
 
 model = load_model(MODEL_PATH, custom_objects={'focal_loss_fixed': focal_loss(gamma=2, alpha=.25)})
 
-char_to_num = {
-    '100': 0, '101': 1, '102': 2, '103': 3, '104': 4, '105': 5, '106': 6, '107': 7, '108': 8, '109': 9, '110': 10, '111': 11,
-    '112': 12, '113': 13, '114': 14, '115': 15, '116': 16, '117': 17, '118': 18, '119': 19, '120': 20, '121': 21, '122': 22,
-    '123': 23, '124': 24, '125': 25, '33': 26, '35': 27, '36': 28, '37': 29, '38': 30, '40': 31, '41': 32, '42': 33, '43': 34,
-    '44': 35, '45': 36, '46': 37, '47': 38, '48': 39, '49': 40, '50': 41, '51': 42, '52': 43, '53': 44, '54': 45, '55': 46,
-    '56': 47, '57': 48, '58': 49, '59': 50, '60': 51, '61': 52, '62': 53, '63': 54, '64': 55, '65': 56, '66': 57, '67': 58,
-    '68': 59, '69': 60, '70': 61, '71': 62, '72': 63, '73': 64, '74': 65, '75': 66, '76': 67, '77': 68, '78': 69, '79': 70,
-    '80': 71, '81': 72, '82': 73, '83': 74, '84': 75, '85': 76, '86': 77, '87': 78, '88': 79, '89': 80, '90': 81, '91': 82,
-    '93': 83, '94': 84, '95': 85, '97': 86, '98': 87, '99': 88
-}
+# Load char_to_num mapping from CSV
+def load_char_to_num(csv_path):
+    df = pd.read_csv(csv_path)
+    
+    # Extract the first (and presumably only) entry in the 'char_to_num' column
+    char_to_num_str = df.at[0, 'char_to_num']
+    
+    # Convert the string representation of the dictionary into an actual dictionary
+    char_to_num = ast.literal_eval(char_to_num_str)
+    
+    return char_to_num
+
+char_to_num = load_char_to_num(SAVED_MODEL_CSV)
 
 # Set debug flag to True to enable image visualization
-DEBUG = True
+DEBUG = False
 
 
 def preprocess_image(image_path):
@@ -109,7 +115,7 @@ def evaluate_expression(expression):
         return str(e)
 
 def main():
-    image_path = 'test/1.png'
+    image_path = 'test/2.png'
     binary_image = preprocess_image(image_path)
     char_images = segment_characters(binary_image)
 
@@ -118,7 +124,7 @@ def main():
     print(f"Recognized Expression: {expression}")
 
     # If confidence is low, switch to Tesseract
-    if len(expression) == 0 or not expression.isalnum():
+    if len(expression) == 0 or not any(char.isdigit() for char in expression):
         expression = recognize_with_tesseract(image_path)
         print(f"Fallback to Tesseract OCR, Recognized Expression: {expression}")
 
