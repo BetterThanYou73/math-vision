@@ -107,15 +107,21 @@ def recognize_with_tesseract(image_path):
     text = pytesseract.image_to_string(image_path)
     return text.strip()
 
-def evaluate_expression(expression):
+def evaluate_expression(expression, image_path):
     try:
         result = eval(expression)
         return result
     except Exception as e:
-        return str(e)
+        try:
+            expression = recognize_with_tesseract(image_path)
+            print(f"Fallback to Tesseract OCR, Recognized Expression: {expression}")
+            result = eval(expression)
+            return result
+        except Exception as e:
+            return str(e)
 
 def main():
-    image_path = 'test/2.png'
+    image_path = 'test/3.png'
     binary_image = preprocess_image(image_path)
     char_images = segment_characters(binary_image)
 
@@ -128,7 +134,7 @@ def main():
         expression = recognize_with_tesseract(image_path)
         print(f"Fallback to Tesseract OCR, Recognized Expression: {expression}")
 
-    result = evaluate_expression(expression)
+    result = evaluate_expression(expression, image_path)
     print(f"Result: {result}")
 
 if __name__ == "__main__":

@@ -1,7 +1,9 @@
+tk
 gdown
 pandas
 openpyxl
 numpy~=1.2
 pytesseract
 opencv-python
+customtkinter
 tensorflow==2.10.1
