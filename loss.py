@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import backend
 
-def focal_loss(gamma=2., alpha=0.25):
+def focal_loss(gamma=2., alpha=0.25, label_smoothing=0.1):
     """
     Computes the focal loss, which is designed to address the class imbalance problem by down-weighting well-classified examples.
 
@@ -17,10 +17,13 @@ def focal_loss(gamma=2., alpha=0.25):
         epsilon = backend.epsilon()
         y_true = tf.cast(y_true, tf.float32)
         y_pred = tf.cast(y_pred, tf.float32)
-        y_pred = backend.clip(y_pred, epsilon, 1. - epsilon)
         
-        # Ensure y_true and y_pred are reshaped correctly
-        y_true = tf.reshape(y_true, [-1, tf.shape(y_pred)[-1]])
+        # Apply label smoothing
+        if label_smoothing > 0:
+            num_classes = tf.shape(y_true)[-1]
+            y_true = (1.0 - label_smoothing) * y_true + label_smoothing / tf.cast(num_classes, tf.float32)
+        
+        y_pred = backend.clip(y_pred, epsilon, 1. - epsilon)
         
         alpha_t = y_true * alpha + (1 - y_true) * (1 - alpha)
         p_t = y_true * y_pred + (1 - y_true) * (1 - y_pred)
@@ -28,4 +31,5 @@ def focal_loss(gamma=2., alpha=0.25):
         fl = - alpha_t * backend.pow((1 - p_t), gamma) * backend.log(p_t)
         
         return backend.mean(backend.sum(fl, axis=-1))
+    
     return focal_loss_fixed

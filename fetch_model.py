@@ -2,12 +2,16 @@ import os
 import csv
 import pandas as pd
 import model.fetcher as fetcher
-
+import model.update_models_database as csv_update
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(DIR, "model", "model.h5")  # Use os.path.join for better compatibility
+MODELS_LIST="models.xlsx"
 
-
+# ANSI escape code
+green_text = "\033[92m"
+blue_text = '\033[94m'
+reset_text = "\033[0m"
 
 def list_model(path):
     """Lists models from path provided.
@@ -18,10 +22,9 @@ def list_model(path):
         dict: A mapped dictionary of filename and URL.
     """
 
-    df = pd.read_csv(path)
-    models = df.iloc[:, 0].values
-    url = df.iloc[:, 1].values
-    return dict(zip(models, url))
+    df = pd.read_excel(path)
+    models = dict(zip(df['model'], zip(df['url'], df['description'])))
+    return models
 
 
 def model_save(m1, models, path=MODEL_PATH):
@@ -33,30 +36,42 @@ def model_save(m1, models, path=MODEL_PATH):
         path (str): Path where the model will be saved.
     """
     
-    print("Fetching model:\t", m1)
-    fetcher.fetch_model(models[m1], path)
-    print("Model saved at:\t", path)
+    print(f"{green_text}Fetching model:\t{blue_text}", m1,'\n')
+    print(green_text)
+    fetcher.fetch_model(models[m1][0], path)
+    print(f"\n{green_text}Model saved at:\t{blue_text}", path)
     
     saved = {m1: models[m1]}
     
-    with open(os.path.join(DIR, 'model', 'saved_model.csv'), 'w', newline='') as csvfile:
+    with open(os.path.join(DIR, 'model', 'current_model.csv'), 'w', newline='') as csvfile:
         labelwriter = csv.writer(csvfile)
-        labelwriter.writerow(['model', 'url'])
+        labelwriter.writerow(['model', 'url', 'description'])
         labelwriter.writerows(saved.items())
         
         
 def fetch_model():
+
     choices = dict()
-    models = list_model(os.path.join(DIR, "models.csv",))
-    print("Please decide the model out of the following available:\t")
+    csv_update.fetch_csv(output=MODELS_LIST)
+    models = list_model(os.path.join(DIR, MODELS_LIST))
+    
+    # Calculate maximum lengths for each column
+    max_no_len = max(len(f"Press {ct}") for ct in range(1, len(models) + 1)) + 1
+    max_model_len = max(len(model) for model in models) + 2
+    max_desc_len = max(len(desc) for _, desc in models.values()) + 2
+    
+    # Print header with dynamic spacing
+    print(f"{green_text}{'No.':<{max_no_len}} {'Model Name':<{max_model_len}} {'Description':<{max_desc_len}}{reset_text}")
+    print(f"{green_text}{'-' * max_no_len} {'-' * max_model_len} {'-' * max_desc_len}{reset_text}")
     
     ct = 1
-    for model in models:
+    for model, (url, desc) in models.items():
         choices[ct] = model
-        print(f"Press {ct} for fetching {model}")
+        print(f"{green_text}Press {ct:<{len('No.')}} {model:<{max_model_len}} {desc:<{max_desc_len}}{reset_text}")
         ct += 1
     
-    m1 = choices[int(input("\nChoose the model:\t"))]
+    m1 = choices[int(input(f"\n{green_text}Choose the model:\t{blue_text}"))]
+    print(reset_text)
     model_save(m1, models)
 
 

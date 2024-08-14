@@ -1,5 +1,6 @@
 gdown
 pandas
+openpyxl
 numpy~=1.2
 pytesseract
 opencv-python
